@@ -6,7 +6,7 @@ DATABASE
 * Tables:
 - Bảng users :
 
-Tên		Kiểu dữ liệu		Chi tiết
+Tên             Kiểu dữ liệu		Chi tiết
 id		INT			Khóa của bảng.
 email		VARCHAR			Email của người dùng.
 password	VARCHAR			Mật khẩu của người dùng đã được hash.
