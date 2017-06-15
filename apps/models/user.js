@@ -25,7 +25,7 @@ function addUser(user) {
 function getUserByEmail(email) {
     if (email) {
         var defer = q.defer();
-        console.log(JSON.stringify(email));
+        // console.log(JSON.stringify(email));
         var query = conn.query('SELECT * FROM users WHERE ?', {
             email: email
         }, function(error, result) {

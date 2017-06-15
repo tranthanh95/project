@@ -1,0 +1,12 @@
+#drop_zone {
+    border: solid 1px gray;
+    border-radius: 4px;
+    width: 100%;
+    height: 100px;
+    text-align: center;
+    padding: 10px;
+}
+
+.title-upload {
+    text-align: center;
+}

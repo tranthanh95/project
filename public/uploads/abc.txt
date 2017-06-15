@@ -1,0 +1,22 @@
+Rainbow table / Dictionary attack.
+
+text value || hash value.
+
+
+Hash => x -> y.
+
+----------------
+Hash(hash(pasword) + salt)
+
+token = hash(email + random)
+
+
+id:
+email:
+password:
+resetToken:
+resetTokenExprice: 1 ngày.
+
+
+quét token tìm ra ngươi dùng.
+nếu qua hạn thì reset Token cho người dùng.
