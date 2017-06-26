@@ -1,34 +1,30 @@
-var os = require("os");
-var path = require('path');
-var fs = require('fs');
-var express = require("express");
-var router = express.Router();
+const os = require("os");
+const path = require('path');
+const fs = require('fs');
+const express = require("express");
+const router = express.Router();
 
-var formidable = require("formidable");
+const formidable = require("formidable");
 
-var user_md = require("../models/user");
-var file_md = require("../models/file");
-var helper = require("../helpers/helper");
-var login_middleware = require("../middlewares/login-middleware");
+const user_md = require("../models/user");
+const file_md = require("../models/file");
+const helper = require("../helpers/helper");
+const login_middleware = require("../middlewares/login-middleware");
 
 // Router home page
-router.get("/", function(req, res) {
-    res.render("test", {
-        data: false
-    });
+router.get("/test", (req, res) => {
+    res.render("test", {data: false});
 });
 
 // router login form
-router.get("/login", function(req, res) {
-    res.render("login", {
-        data: false
-    });
+router.get("/login", (req, res) => {
+    res.render("login", {data: false});
 });
 
 // router login form
-router.post("/login", function(req, res) {
+router.post("/login", (req, res) => {
     var params = req.body;
-    console.log(params);
+    // console.log(params);
     if (params.email.trim().length == 0) {
         res.render("login", {
             data: {
@@ -38,7 +34,7 @@ router.post("/login", function(req, res) {
     } else {
         var data = user_md.getUserByEmail(params.email);
         if (data) {
-            data.then(function(users) {
+            data.then((users) => {
                 // console.log(JSON.stringify(users));
                 if (users.length > 0) {
                     var user = users[0];
@@ -50,16 +46,13 @@ router.post("/login", function(req, res) {
                             }
                         });
                     } else {
-                        if (params.remember == '1') {
-                            console.log('asdsdas');
-                            req.session.cookie.maxAge = 2592000000; // 30*24*60*60*1000 Rememeber 'me' for 30 days
-                            console.log(req.session.cookie);
-                        } else {
-                            req.session.cookie.expires = false;
-                            req.session.user = user;
-                            console.log(req.session.user);
-                            res.redirect("/homepage");
-                        }
+                        req.session.user = user;
+                        delete req.session.user.password; // delete the password from the session.
+                        delete req.session.user.resetPasswordToken; // delete the resetPasswordToken from the session.
+                        delete req.session.user.resetPasswordExpires; // delete the resetPasswordExpires from the session.
+                        delete req.session.user.block; // delete the block from the session.
+                        // console.log(req.session.user);
+                        res.redirect("/");
                     }
                 } else {
                     res.render("login", {
@@ -80,14 +73,12 @@ router.post("/login", function(req, res) {
 });
 
 // Router register form
-router.get("/register", function(req, res) {
-    res.render("register", {
-        data: false
-    });
+router.get("/register", (req, res) => {
+    res.render("register", {data: false});
 });
 
 // Function when user register and check.
-router.post("/register", function(req, res) {
+router.post("/register", (req, res) => {
     /*
     // Check captcha.
     // g-recaptcha-response is the key that browser will generate upon form submit.
@@ -136,9 +127,9 @@ router.post("/register", function(req, res) {
         block: 0
     }
     var result = user_md.addUser(user);
-    result.then(function(data) {
+    result.then((data) => {
         res.redirect("/login");
-    }).catch(function(err) {
+    }).catch((err) => {
         res.render("register", {
             data: {
                 error: "Could not insert user data to DB!"
@@ -148,30 +139,96 @@ router.post("/register", function(req, res) {
 });
 
 // This will handle forgot password requests.
-router.get("/forgot", function(req, res) {
+router.get("/forgot", (req, res) => {
     res.render("forgotpassword");
 });
 
+// Router get all file from database.
+router.get("/files", (req, res) => {
+    var listFiles = file_md.getAllFiles();
+    if (listFiles) {
+        listFiles.then((files) => {
+            if (files.length > 0) {
+                // console.log(files[0].name);
+                res.render('files', {
+                    data: {
+                        files: files,
+                        error: false
+                    }
+                });
+            }
+        }).catch((error) => {
+            res.render('files', {
+                data: {
+                    error: error
+                }
+            });
+        });
+    } else {
+        res.render("files", {
+            data: {
+                error: "Could not data form database!!"
+            }
+        });
+    }
+});
+
 // This will handle forgot password requests.
-router.get("/homepage", login_middleware, function(req, res) {
-    res.render("homepage", { data: { fullname: req.session.user.fullname } });
+router.get("/", login_middleware, (req, res) => {
+    var id_user = req.session.user.id;
+    // console.log(id_user);
+    var files = file_md.getFilesById(id_user);
+    if (files) {
+        files.then((results) => {
+            if (results.length > 0) {
+                // console.log(files);
+                res.render('homepage', {
+                    data: {
+                        fullname: req.session.user.fullname,
+                        id: req.session.user.id,
+                        error: false
+                    }
+                });
+            } else {
+                res.render("homepage", {
+                    data: {
+                        error: "Could not data form database!!",
+                        fullname: req.session.user.fullname
+                    }
+                });
+            }
+        }).catch((error) => {
+            res.render('homepage', {
+                data: {
+                    error: error,
+                    fullname: req.session.user.fullname
+                }
+            });
+        });
+    } else {
+        res.render("homepage", {
+            data: {
+                error: "Could not data form database!!",
+                fullname: req.session.user.fullname
+            }
+        });
+    }
 });
 
 // This will handle upload file.
-router.post('/homepage', login_middleware, function(req, res) {
+router.post('/', login_middleware, (req, res) => {
     // create an incoming form object
     var form = new formidable.IncomingForm();
-    // specify that we want to allow the user to upload multiple files in a single request
+    // specify that we want to allow the user to upload multiple files in a single
+    // request
     form.multiples = true;
-    // store all uploads in the /uploads directory
-    console.log(process.cwd());
-    console.log(process.cwd() + '/public/uploads');
+    // store all uploads in the /uploads directory console.log(process.cwd());
+    // console.log(process.cwd() + '/public/uploads');
     form.uploadDir = path.join((process.cwd() + " ").trim(), '/public/uploads');
-    // every time a file has been uploaded successfully,
-    // rename it to it's orignal name
-    form.on('file', function(field, file) {
-        // console.log(file);
-        //Add file into Database.
+    // every time a file has been uploaded successfully, rename it to it's orignal
+    // name
+    form.on('file', (field, file) => {
+        // console.log(file); Add file into Database.
         var currentFile = {
             name: file.name,
             format: file.type,
@@ -181,19 +238,23 @@ router.post('/homepage', login_middleware, function(req, res) {
             path: form.uploadDir
         };
         var data = file_md.addFile(currentFile);
-        data.then(function(results) {
-            console.log(form.uploadDir);
+        data.then((results) => {
+            // console.log(form.uploadDir);
             fs.rename(file.path, path.join(form.uploadDir, file.name));
-        }).catch(function(error) {
-            res.render('homepage', { data: { error: "Could not insert Database!" } });
+        }).catch((error) => {
+            res.render('homepage', {
+                data: {
+                    error: "Could not insert Database!"
+                }
+            });
         });
     });
     // log any errors that occur
-    form.on('error', function(err) {
+    form.on('error', (err) => {
         console.log('An error has occured: \n' + err);
     });
     // once all the files have been uploaded, send a response to the client
-    form.on('end', function() {
+    form.on('end', () => {
         res.end('success');
     });
     // parse the incoming request containing the form data
@@ -201,14 +262,19 @@ router.post('/homepage', login_middleware, function(req, res) {
 });
 
 // This will handle logout requests.
-router.get("/logout", function(req, res) {
-    req.session.destroy();
+router.get("/logout", (req, res) => {
+    req
+        .session
+        .destroy();
     res.redirect('login');
 });
 
 // This will handle 404 requests.
-router.get("*", function(req, res) {
-    res.status(404).send("404");
+router.get("*", (req, res) => {
+    res
+        .status(404)
+        .send("404");
 });
 
+// Export module.
 module.exports = router;

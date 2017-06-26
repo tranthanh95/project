@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Files</title>
+	<%- include layout/head %>
+</head>
+<body>
+	<h3>Files</h3>
+	<% if (data && data.files) { %>
+		<% var files = data.files; %>
+		<% for( var i = 0 ; i < files.length; i++) {%>
+			<%=files[i].name %>
+		<% } } %>
+</body>
+</html>

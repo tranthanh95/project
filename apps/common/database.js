@@ -10,7 +10,7 @@ var connection = mysql.createConnection({
 });
 
 // Check connection with database.
-connection.connect(function(err) {
+connection.connect((err) => {
     if (err) {
         console.error('error connecting: ' + err.stack);
         return;
@@ -19,14 +19,14 @@ connection.connect(function(err) {
 });
 
 // Function get connection.
-function getConnection() {
+var getConnection = () => {
     if (!connection) {
         connection.connect();
         console.log("Connection database successfully!!");
     }
     return connection;
 }
-
+// Export module.
 module.exports = {
     getConnection: getConnection
 }
